@@ -1,5 +1,8 @@
 const { createToken } = require("../middleware/auth");
+const uploadImage = require("../middleware/cloudnary");
 const { userService } = require("../services");
+const sendEmail = require("../services/email.service");
+const bcrypt = require('bcrypt');
 
 let getUser = async (req, res) => {
   try {
@@ -19,13 +22,29 @@ let register = async (req, res) => {
   let body = req.body;
   let { path } = req.file;
 
+  let result = await uploadImage(path)
+
   let newBody = {
     ...body,
-    profile: path,
+    profile: result.url,
   };
+
+  bcrypt.hash(body.password, 20, function (err, hash) {
+    
+  });
+
   console.log(newBody);
 
+  // console.log(result, "cloud");
+
   let user = await userService.register(newBody);
+
+  if (user) {
+
+    let email = await sendEmail(user.email, "Test mail", `Hello ${user.email}`)
+
+    console.log(email, "email");
+  }
 
   res.status(200).json({
     message: "user created success",
